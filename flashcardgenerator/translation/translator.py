@@ -69,14 +69,11 @@ class DictionaryParser():
         o_variants = self.parse_variants(self.get_variants(orig))
         o_plurals = self.parse_plurals(self.get_plurals(orig))
         t_variants = self.parse_variants(self.get_variants(trans))
-        try:
-            res = {'singular': u"%s" % o_variants[0]['word'],
-                   'gender': o_variants[0]['gender'],
-                   'plural': o_plurals[0]['word'],
-                   'translations': t_variants[0]['word'],
-                   }
-        except UnicodeDecodeError:
-            import pdb; pdb.set_trace()
+        res = {'singular': u"%s" % o_variants[0]['word'],
+               'gender': o_variants[0]['gender'],
+               'plural': o_plurals[0]['word'],
+               'translations': t_variants[0]['word'],
+               }
 
         return res
 
