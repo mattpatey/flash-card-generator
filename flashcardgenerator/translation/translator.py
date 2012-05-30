@@ -12,7 +12,7 @@ from pkg_resources import (
     yield_lines,
     )
 
-import data
+from flashcardgenerator import data
 
 
 class WordNotFoundException(Exception):

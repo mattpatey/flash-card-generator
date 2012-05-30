@@ -7,9 +7,7 @@ Tests for the parsing mechanism.
 import os
 from unittest import TestCase
 
-from pkg_resources import resource_string
-
-from ..translator import (
+from flashcardgenerator.translation.translator import (
     DictionaryParser,
     Translator,
     WordNotFoundException,
@@ -27,6 +25,18 @@ class TranslatorTests(TestCase):
             plural=u'Brote',
             translations=(u'bread'))
         self.assertEqual(expected, translator.translate('Brot'))
+
+    def test_uncapitalized_noun(self):
+        """
+        Nouns shouldn't have to be capitalized when input.
+        """
+        translator = Translator()
+        expected = dict(
+            singular=u'Brot',
+            gender=u'n',
+            plural=u'Brote',
+            translations=(u'bread'))
+        self.assertEqual(expected, translator.translate('brot'))
 
 
 class DictionaryParserTests(TestCase):

@@ -5,7 +5,7 @@ from tempfile import gettempdir
 from unittest import TestCase
 from uuid import uuid4
 
-from ..pdf_renderer import CardRenderer
+from flashcardgenerator.rendering.pdf_renderer import CardRenderer
 
 
 TEST_WORDS = u"""\
