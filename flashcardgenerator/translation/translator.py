@@ -12,7 +12,7 @@ from pkg_resources import (
     yield_lines,
     )
 
-import flashcardgenerator
+import data
 
 
 class WordNotFoundException(Exception):
@@ -32,7 +32,7 @@ class DictionaryParser():
 
     def __init__(self):
 
-        self.entries = yield_lines(resource_string(flashcardgenerator.__name__, 'de-en.txt'))
+        self.entries = yield_lines(resource_string(data.__name__, 'de-en.txt'))
 
     def lookup(self, word):
 

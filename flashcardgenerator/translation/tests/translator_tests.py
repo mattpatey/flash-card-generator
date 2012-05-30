@@ -9,7 +9,6 @@ from unittest import TestCase
 
 from pkg_resources import resource_string
 
-import flashcardgenerator
 from ..translator import (
     DictionaryParser,
     Translator,
