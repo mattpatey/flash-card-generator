@@ -18,7 +18,7 @@ setup(author="Matt Patey",
       license=open('LICENSE', 'r').read(),
       long_description=open("README.md", "r").read(),
       name="Flashcard generator",
-      packages=find_packages(exclude=['ez_setup', 'tests']),
+      packages=find_packages(exclude=['ez_setup', 'tests', 'examples']),
       version=version,
       zip_safe=False,
       package_data={
