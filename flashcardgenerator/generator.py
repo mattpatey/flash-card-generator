@@ -1,0 +1,47 @@
+
+
+import argparse
+
+import logging
+
+from rendering import CardRenderer
+
+from translation import (
+    Translator,
+    WordNotFoundException,
+    )
+
+
+translator = Translator()
+
+
+def translate(word):
+    try:
+        return translator.translate(word)
+    except WordNotFoundException:
+        logging.warn("Couldn't find translation for '%s'." % word)
+        raise
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser('Generate flash cards.')
+    parser.add_argument('--word-file', type=str)
+    parser.add_argument('--lookup', type=str)
+    args = parser.parse_args()
+
+    if args.lookup:
+        print translate(args.lookup.strip())
+    elif args.word_file:
+        word_pairs = []
+        with open(args.word_file, 'r') as lines:
+            for word in lines:
+                try:
+                    word_info = translate(word.strip())
+                except WordNotFoundException:
+                    continue
+                word_pairs.append((word_info['singular'],
+                                   word_info['translations']))
+
+        renderer = CardRenderer()
+        renderer.render_cards(word_pairs,
+                              '/tmp/test.pdf')
