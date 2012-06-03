@@ -68,17 +68,20 @@ class DictionaryParser():
         o_plurals = self.parse_plurals(self.get_plurals(orig))
         t_variants = self.parse_variants(self.get_variants(trans))
 
+        # TODO: Don't store properties for words for which the
+        # property makes sense, e.g. verbs don't have gender.
         res = dict(singular=None,
                    gender=None,
                    plural=None,
                    translations=None)
+
         if o_variants:
-            res['singular'] = u"%s" % o_variants[0]['word']
-            res['gender'] = u"%s" % o_variants[0]['gender']
+            res['singular'] = o_variants[0]['word']
+            res['gender'] = o_variants[0]['gender']
         if o_plurals:
-            res['plural'] = u"%s" % o_plurals[0]['word']
+            res['plural'] = o_plurals[0]['word']
         if t_variants:
-            res['translations'] = u"%s" % t_variants[0]['word']
+            res['translations'] = t_variants[0]['word']
 
         return res
 
@@ -105,6 +108,7 @@ class DictionaryParser():
         """
 
         # TODO: Parse verbs and acronyms (e.g. /CDU/)
+        # TODO: Support multi-word entries, e.g. "zu leicht nehmen"
         all_variants = [v.strip() for v in variants.split(';')]
         word_parts = r'(?P<word>\w+) ?(\{(?P<gender>[m|f|n])\})? ?(\[(?P<field>\w+\.?)\])? ?'
         word_parts_re = re.compile(word_parts, re.UNICODE)

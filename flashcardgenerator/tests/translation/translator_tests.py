@@ -72,6 +72,16 @@ class DictionaryParserTests(TestCase):
         result = self.parser.parse_line(self.adjective)
         self.assertEqual(expected, result)
 
+    def test_multi_word_translation(self):
+
+        expected = dict(singular=u"aufrufen",
+                        gender=None,
+                        plural=None,
+                        translations=u"to invoice")
+        line = u"aufrufen :: to invoice"
+        result = self.parser.parse_line(line)
+        self.assertEqual(expected, result)
+
     def test_get_language_parts(self):
 
         original, translation = self.parser.split_original_translation(self.adjective)
@@ -102,6 +112,7 @@ class DictionaryParserTests(TestCase):
 
     def test_parse_variants(self):
 
+        self.maxDiff = 1000
         original, translated = self.parser.split_original_translation(self.adjective)
         variants = self.parser.get_variants(original)
         expected = [

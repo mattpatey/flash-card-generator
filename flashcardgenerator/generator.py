@@ -24,6 +24,13 @@ def translate(word):
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger()
+    handler = logging.FileHandler('flash-card-generator.log')
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.WARNING)
+
     parser = argparse.ArgumentParser('Generate flash cards.')
     parser.add_argument('--word-file', type=str)
     parser.add_argument('--lookup', type=str)
