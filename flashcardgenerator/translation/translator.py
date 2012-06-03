@@ -12,7 +12,7 @@ from pkg_resources import (
     yield_lines,
     )
 
-from flashcardgenerator import data
+from .. import data
 
 
 class WordNotFoundException(Exception):
@@ -36,14 +36,16 @@ class DictionaryParser():
 
     def lookup(self, word):
 
+        lookup_re = r'^%s.*$' % word
+        lookup_ptn = re.compile(lookup_re, re.IGNORECASE)
+
         def find_word(w):
             # TODO: This is probably the least efficient way of
             # looking up a word, but it works (for now).
             for line in self.entries:
-                line = line.decode('utf-8')
-                if line.startswith(w):
-                    matching_line = line
-                    return line
+                line_u = line.decode('utf-8')
+                if re.match(lookup_ptn, line_u):
+                    return line_u
             raise WordNotFoundException
 
         try:
@@ -69,11 +71,18 @@ class DictionaryParser():
         o_variants = self.parse_variants(self.get_variants(orig))
         o_plurals = self.parse_plurals(self.get_plurals(orig))
         t_variants = self.parse_variants(self.get_variants(trans))
-        res = {'singular': u"%s" % o_variants[0]['word'],
-               'gender': o_variants[0]['gender'],
-               'plural': o_plurals[0]['word'],
-               'translations': t_variants[0]['word'],
-               }
+
+        res = dict(singular=None,
+                   gender=None,
+                   plural=None,
+                   translations=None)
+        if o_variants:
+            res['singular'] = u"%s" % o_variants[0]['word']
+            res['gender'] = u"%s" % o_variants[0]['gender']
+        if o_plurals:
+            res['plural'] = u"%s" % o_plurals[0]['word']
+        if t_variants:
+            res['translations'] = u"%s" % t_variants[0]['word']
 
         return res
 

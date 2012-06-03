@@ -53,15 +53,15 @@ class DictionaryParserTests(TestCase):
     def test_lookup(self):
 
         expected = dict(singular=u"Brötchen",
-                        gender='n',
+                        gender=u"n",
                         plural=u"Brötchen",
-                        translations="roll")
+                        translations=u"roll")
         result = self.parser.lookup(u"Brötchen")
         self.assertEqual(expected, result)
 
     def test_lookup_raises_when_word_not_found(self):
 
-        self.assertRaises(WordNotFoundException, self.parser.lookup, word='foo')
+        self.assertRaises(WordNotFoundException, self.parser.lookup, word='xyz')
 
     def test_parse_line(self):
 
