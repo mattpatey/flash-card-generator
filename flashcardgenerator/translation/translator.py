@@ -30,10 +30,6 @@ class DictionaryParser():
     will be supported.
     """
 
-    def __init__(self):
-
-        self.entries = yield_lines(resource_string(data.__name__, 'de-en.txt'))
-
     def lookup(self, word):
 
         lookup_re = r'^%s.*$' % word
@@ -42,7 +38,7 @@ class DictionaryParser():
         def find_word(w):
             # TODO: This is probably the least efficient way of
             # looking up a word, but it works (for now).
-            for line in self.entries:
+            for line in yield_lines(resource_string(data.__name__, 'de-en.txt')):
                 line_u = line.decode('utf-8')
                 if re.match(lookup_ptn, line_u):
                     return line_u
