@@ -44,8 +44,7 @@ class CardRenderer():
     def __build_card(self, word):
 
             elements = [
-                Spacer(A8[0], A8[1] / 2.5),
-                Paragraph(word, self.flash_card_style),
+
                 ]
 
             return elements
@@ -54,13 +53,26 @@ class CardRenderer():
 
         story = []
 
+        def _c(original, translated, gender=None):
+            if gender:
+                first_line_original = u'%s (%s)' % (original, gender)
+            else:
+                first_line_original = original
+
+            elements = [Spacer(A8[0], A8[1] / 2.5),
+                        Paragraph(first_line_original, self.flash_card_style),
+                        PageBreak(),
+                        Spacer(A8[0], A8[1] / 2.5),
+                        Paragraph(translated, self.flash_card_style),
+                        PageBreak(),
+                        ]
+            return elements
+
         for original, translated in word_pairs:
-            original_card = self.__build_card(original)
-            translated_card = self.__build_card(translated)
-            story = story + original_card
-            story.append(PageBreak())
-            story = story + translated_card
-            story.append(PageBreak())
+            word = original['word']
+            gender = original['gender']
+            cards = _c(word, translated, gender=gender)
+            story = story + cards
 
         doc = FlashCardTemplate(output)
         doc.multiBuild(story)

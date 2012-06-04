@@ -46,7 +46,9 @@ if __name__ == '__main__':
                     word_info = translate(word.strip())
                 except WordNotFoundException:
                     continue
-                word_pairs.append((word_info['singular'],
+                original_word_data = dict(word=word_info['singular'],
+                                          gender=word_info['gender'])
+                word_pairs.append((original_word_data,
                                    word_info['translations']))
 
         renderer = CardRenderer()
