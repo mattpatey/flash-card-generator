@@ -110,13 +110,15 @@ class DictionaryParser():
         # TODO: Parse verbs and acronyms (e.g. /CDU/)
         # TODO: Support multi-word entries, e.g. "zu leicht nehmen"
         all_variants = [v.strip() for v in variants.split(';')]
-        word_parts = r'(?P<word>\w+) ?(\{(?P<gender>[m|f|n])\})? ?(\[(?P<field>\w+\.?)\])? ?'
+        word_parts = r'(?P<word>[\w\s]+) ?(\{(?P<gender>[m|f|n])\})? ?(\[(?P<field>\w+\.?)\])? ?'
         word_parts_re = re.compile(word_parts, re.UNICODE)
-
         regex_matches = [word_parts_re.match(v) for v in all_variants]
-        variant_struct = [v.groupdict() for v in regex_matches if v]
+        variant_list = [v.groupdict() for v in regex_matches if v]
 
-        return variant_struct
+        for v in variant_list:
+            v['word'] = v['word'].strip()
+
+        return variant_list
 
     def get_plurals(self, line):
         """

@@ -140,7 +140,7 @@ class DictionaryParserTests(TestCase):
             dict(word=u'roll',
                  gender=None,
                  field=None),
-            dict(word=u'bread',
+            dict(word=u'bread roll',
                  gender=None,
                  field=None),
             ]
