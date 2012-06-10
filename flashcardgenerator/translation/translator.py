@@ -15,6 +15,11 @@ from pkg_resources import (
 from .. import data
 
 
+class ParseException(Exception):
+
+    pass
+
+
 class WordNotFoundException(Exception):
 
     pass
@@ -83,7 +88,10 @@ class DictionaryParser():
         if t_variants:
             res['translations'] = t_variants[0]['word']
 
-        return res
+        if o_variants:
+            return o_variants[0]['word'], res
+        else:
+            raise ParseException(line)
 
     def split_original_translation(self, line):
         """
