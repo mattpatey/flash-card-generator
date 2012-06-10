@@ -159,10 +159,13 @@ class Translator():
     Find translations and meta-data of words.
     """
 
-    def __init__(self):
+    def __init__(self, lookup_table):
 
-        self.dictionary_parser = DictionaryParser()
+        self.lookup_table = lookup_table
 
-    def translate(self, word):
+    def lookup(self, word):
 
-        return self.dictionary_parser.lookup(word)
+        try:
+            return self.lookup_table[word]
+        except KeyError:
+            raise WordNotFoundException(word)

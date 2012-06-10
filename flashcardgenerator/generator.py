@@ -1,6 +1,7 @@
 
 
 import argparse
+import codecs
 import logging
 import pickle
 
@@ -23,7 +24,10 @@ from translation import (
     )
 
 
-translator = Translator()
+with open('dictionary.pkl', 'r') as lookup_table_file:
+    lookup_table = pickle.load(lookup_table_file)
+
+translator = Translator(lookup_table)
 dict_parser = DictionaryParser()
 
 
@@ -42,7 +46,7 @@ def parse_dictionary():
 
 def translate(word):
     try:
-        return translator.translate(word)
+        return translator.lookup(word)
     except WordNotFoundException:
         logging.warn("Couldn't find translation for '%s'." % word)
         raise
@@ -74,7 +78,7 @@ if __name__ == '__main__':
 
     if args.word_file:
         word_pairs = []
-        with open(args.word_file, 'r') as lines:
+        with codecs.open(args.word_file, 'r', encoding='utf-8') as lines:
             for word in lines:
                 try:
                     word_info = translate(word.strip())
