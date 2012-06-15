@@ -16,27 +16,33 @@ from flashcardgenerator.translation.translator import (
 
 class TranslatorTests(TestCase):
 
+    lookup_table = {u"Brot": {u"gender": "n",
+                              u"plural": u"Brote",
+                              u"translations": u"bread",
+                              u"singular": u"Brot"}
+                    }
+
     def test_translate(self):
 
-        translator = Translator()
+        translator = Translator(self.lookup_table)
         expected = dict(
-            singular=u'Brot',
-            gender=u'n',
-            plural=u'Brote',
-            translations=(u'bread'))
-        self.assertEqual(expected, translator.translate('Brot'))
+            singular=u"Brot",
+            gender=u"n",
+            plural=u"Brote",
+            translations=(u"bread"))
+        self.assertEqual(expected, translator.lookup(u"Brot"))
 
     def test_uncapitalized_noun(self):
         """
         Nouns shouldn't have to be capitalized when input.
         """
-        translator = Translator()
+        translator = Translator(self.lookup_table)
         expected = dict(
-            singular=u'Brot',
-            gender=u'n',
-            plural=u'Brote',
-            translations=(u'bread'))
-        self.assertEqual(expected, translator.translate('brot'))
+            singular=u"Brot",
+            gender=u"n",
+            plural=u"Brote",
+            translations=(u"bread"))
+        self.assertEqual(expected, translator.lookup(u"brot"))
 
 
 class DictionaryParserTests(TestCase):

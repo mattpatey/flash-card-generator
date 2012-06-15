@@ -162,8 +162,21 @@ class Translator():
         self.lookup_table = lookup_table
 
     def lookup(self, word):
+        """
+        Perform a totally dumb word lookup.
+
+        If at first the provided word is not found then try again with
+        the first word capitalized.
+
+        We could be smart and use a trie-like structure but...
+
+        Raises WordNotFoundException if the word is not found despite
+        our best efforts.
+        """
 
         try:
             return self.lookup_table[word]
+        except KeyError:
+            return self.lookup_table[word.capitalize()]
         except KeyError:
             raise WordNotFoundException(word)
