@@ -52,10 +52,10 @@ class DictionaryParserTests(TestCase):
 
     def test_lookup(self):
 
-        expected = dict(singular=u"Brötchen",
-                        gender=u"n",
-                        plural=u"Brötchen",
-                        translations=u"roll")
+        expected = (u"Brötchen", dict(singular=u"Brötchen",
+                                      gender=u"n",
+                                      plural=u"Brötchen",
+                                      translations=u"roll"))
         result = self.parser.lookup(u"Brötchen")
         self.assertEqual(expected, result)
 
@@ -65,19 +65,19 @@ class DictionaryParserTests(TestCase):
 
     def test_parse_line(self):
 
-        expected = dict(singular=u"Brötchen",
-                        gender='n',
-                        plural=u"Brötchen",
-                        translations="roll")
+        expected = (u"Brötchen", dict(singular=u"Brötchen",
+                                      gender='n',
+                                      plural=u"Brötchen",
+                                      translations="roll"))
         result = self.parser.parse_line(self.adjective)
         self.assertEqual(expected, result)
 
     def test_multi_word_translation(self):
 
-        expected = dict(singular=u"aufrufen",
-                        gender=None,
-                        plural=None,
-                        translations=u"to invoice")
+        expected = ('aufrufen', dict(singular=u"aufrufen",
+                                     gender=None,
+                                     plural=None,
+                                     translations=u"to invoice"))
         line = u"aufrufen :: to invoice"
         result = self.parser.parse_line(line)
         self.assertEqual(expected, result)
@@ -112,7 +112,6 @@ class DictionaryParserTests(TestCase):
 
     def test_parse_variants(self):
 
-        self.maxDiff = 1000
         original, translated = self.parser.split_original_translation(self.adjective)
         variants = self.parser.get_variants(original)
         expected = [
