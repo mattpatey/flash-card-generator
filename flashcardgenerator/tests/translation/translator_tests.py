@@ -12,37 +12,61 @@ from flashcardgenerator.translation.translator import (
     Translator,
     WordNotFoundException,
     )
+from flashcardgenerator.translation.word_parts import (
+    Adjective,
+    Noun,
+    Verb,
+    )
 
 
 class TranslatorTests(TestCase):
 
-    lookup_table = {u"Brot": {u"gender": "n",
-                              u"plural": u"Brote",
-                              u"translations": u"bread",
-                              u"singular": u"Brot"}
+    lookup_table = {u"Brot": Noun(word=u"Brot",
+                                  gender=Noun.NEUTRAL,
+                                  plural_form=u"Brote",
+                                  translation=u"bread",
+                                  ),
+                    u"gnadenlos": Adjective(word=u"gnadenlos",
+                                            translation=u"merciless",
+                                            ),
                     }
 
-    def test_translate(self):
 
-        translator = Translator(self.lookup_table)
-        expected = dict(
-            singular=u"Brot",
-            gender=u"n",
-            plural=u"Brote",
-            translations=(u"bread"))
-        self.assertEqual(expected, translator.lookup(u"Brot"))
+    def setUp(self):
+
+        super(TranslatorTests, self).setUp()
+        self.translator = Translator(self.lookup_table)
+
+    def test_lookup(self):
+
+        expected = Noun(word=u"Brot",
+                        gender=Noun.NEUTRAL,
+                        plural_form=u"Brote",
+                        translation=u"bread",
+                        )
+        self.assertEqual(expected, self.translator.lookup(u"Brot"))
 
     def test_uncapitalized_noun(self):
         """
         Nouns shouldn't have to be capitalized when input.
         """
-        translator = Translator(self.lookup_table)
-        expected = dict(
-            singular=u"Brot",
-            gender=u"n",
-            plural=u"Brote",
-            translations=(u"bread"))
-        self.assertEqual(expected, translator.lookup(u"brot"))
+        expected = Noun(word=u"Brot",
+                        gender=Noun.NEUTRAL,
+                        plural_form=u"Brote",
+                        translation=u"bread",
+                        )
+        self.assertEqual(expected, self.translator.lookup(u"brot"))
+
+    def test_capitalized_non_noun(self):
+        expected = Adjective(word=u"gnadenlos",
+                             translation=u"merciless",
+                             )
+        self.assertEqual(expected, self.translator.lookup(u"Gnadenlos"))
+
+    def test_partial_lookup(self):
+
+        self.translator.lookup(u"bloße")
+        self.translator.lookup(u"Zugeh")
 
 
 class DictionaryParserTests(TestCase):
@@ -58,10 +82,10 @@ class DictionaryParserTests(TestCase):
 
     def test_lookup(self):
 
-        expected = (u"Brötchen", dict(singular=u"Brötchen",
-                                      gender=u"n",
-                                      plural=u"Brötchen",
-                                      translations=u"roll"))
+        expected = Noun(u"Brötchen",
+                        gender=Noun.NEUTRAL,
+                        plural_form=u"Brötchen",
+                        translation=u"roll")
         result = self.parser.lookup(u"Brötchen")
         self.assertEqual(expected, result)
 
@@ -71,19 +95,17 @@ class DictionaryParserTests(TestCase):
 
     def test_parse_line(self):
 
-        expected = (u"Brötchen", dict(singular=u"Brötchen",
-                                      gender='n',
-                                      plural=u"Brötchen",
-                                      translations="roll"))
+        expected = Noun(word=u"Brötchen",
+                        gender=Noun.NEUTRAL,
+                        plural_form=u"Brötchen",
+                        translation=u"roll")
         result = self.parser.parse_line(self.adjective)
         self.assertEqual(expected, result)
 
     def test_multi_word_translation(self):
 
-        expected = ('aufrufen', dict(singular=u"aufrufen",
-                                     gender=None,
-                                     plural=None,
-                                     translations=u"to invoice"))
+        expected = Verb(word=u"aufrufen",
+                        translation=u"to invoice")
         line = u"aufrufen :: to invoice"
         result = self.parser.parse_line(line)
         self.assertEqual(expected, result)

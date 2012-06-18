@@ -13,6 +13,11 @@ from pkg_resources import (
 
 from .. import data
 
+from word_parts import (
+    Noun,
+    Verb,
+    )
+
 
 class ParseException(Exception):
 
@@ -57,13 +62,6 @@ class DictionaryParser():
     def parse_line(self, line):
         """
         Build a data structure from a dictionary entry.
-
-        The structure may include:
-
-            - the singular form
-            - the gender
-            - plural forms
-            - translations
         """
 
         orig, trans = self.split_original_translation(line)
@@ -72,24 +70,24 @@ class DictionaryParser():
         o_plurals = self.parse_plurals(self.get_plurals(orig))
         t_variants = self.parse_variants(self.get_variants(trans))
 
-        # TODO: Don't store properties for words for which the
-        # property makes sense, e.g. verbs don't have gender.
-        res = dict(singular=None,
-                   gender=None,
-                   plural=None,
-                   translations=None)
-        if o_variants:
-            res['singular'] = o_variants[0]['word']
-            res['gender'] = o_variants[0]['gender']
-        if o_plurals:
-            res['plural'] = o_plurals[0]['word']
-        if t_variants:
-            res['translations'] = t_variants[0]['word']
+        gender = None
 
         if o_variants:
-            return o_variants[0]['word'], res
-        else:
-            raise ParseException(line)
+            word = o_variants[0]['word']
+            gender = o_variants[0]['gender']
+        if o_plurals:
+            plural_form = o_plurals[0]['word']
+        if t_variants:
+            translation = t_variants[0]['word']
+
+        if gender:
+            return Noun(word=word,
+                        gender=gender,
+                        plural_form=plural_form,
+                        translation=translation,
+                        )
+        return Verb(word=word,
+                    translation=translation)
 
     def split_original_translation(self, line):
         """
@@ -166,9 +164,9 @@ class Translator():
         Perform a totally dumb word lookup.
 
         If at first the provided word is not found then try again with
-        the first word capitalized.
+        a capialized or lowecased version of the word.
 
-        We could be smart and use a trie-like structure but...
+        TODO: Handle spelling mistakes.
 
         Raises WordNotFoundException if the word is not found despite
         our best efforts.
@@ -177,6 +175,11 @@ class Translator():
         try:
             return self.lookup_table[word]
         except KeyError:
-            return self.lookup_table[word.capitalize()]
-        except KeyError:
-            raise WordNotFoundException(word)
+            try:
+                if word[0].isupper():
+                    modified_word = word.lower()
+                else:
+                    modified_word = word.capitalize()
+                return self.lookup_table[modified_word]
+            except KeyError:
+                raise WordNotFoundException("%s / %s" % (word, modified_word))
