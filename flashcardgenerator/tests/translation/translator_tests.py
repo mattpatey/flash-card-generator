@@ -15,20 +15,15 @@ from flashcardgenerator.translation.translator import (
 from flashcardgenerator.translation.word_parts import (
     Adjective,
     Noun,
+    Translation,
     Verb,
     )
 
 
 class TranslatorTests(TestCase):
 
-    lookup_table = {u"Brot": Noun(word=u"Brot",
-                                  gender=Noun.NEUTRAL,
-                                  plural_form=u"Brote",
-                                  translation=u"bread",
-                                  ),
-                    u"gnadenlos": Adjective(word=u"gnadenlos",
-                                            translation=u"merciless",
-                                            ),
+    lookup_table = {u"Brot": (Noun(u"Brot", gender=Noun.NEUTRAL), Translation(u"roll")),
+                    u"gnadenlos": (Adjective(u"gnadenlos"), Translation(u"merciless")),
                     }
 
 
@@ -39,28 +34,21 @@ class TranslatorTests(TestCase):
 
     def test_lookup(self):
 
-        expected = Noun(word=u"Brot",
-                        gender=Noun.NEUTRAL,
-                        plural_form=u"Brote",
-                        translation=u"bread",
-                        )
+        expected = (Noun(u"Brot", gender=Noun.NEUTRAL,),
+                    Translation(u"roll"))
         self.assertEqual(expected, self.translator.lookup(u"Brot"))
 
     def test_uncapitalized_noun(self):
         """
         Nouns shouldn't have to be capitalized when input.
         """
-        expected = Noun(word=u"Brot",
-                        gender=Noun.NEUTRAL,
-                        plural_form=u"Brote",
-                        translation=u"bread",
-                        )
+        expected = (Noun(u"Brot", gender=Noun.NEUTRAL),
+                    Translation(u"roll"))
         self.assertEqual(expected, self.translator.lookup(u"brot"))
 
     def test_capitalized_non_noun(self):
-        expected = Adjective(word=u"gnadenlos",
-                             translation=u"merciless",
-                             )
+        expected = (Adjective(u"gnadenlos"),
+                    Translation(u"merciless"))
         self.assertEqual(expected, self.translator.lookup(u"Gnadenlos"))
 
     def test_partial_lookup(self):
@@ -78,14 +66,12 @@ class DictionaryParserTests(TestCase):
 
         super(DictionaryParserTests, self).setUp()
         self.parser = DictionaryParser()
-        self.adjective = u"Brötchen {n}; Semmel {f}; Wecken {m}; Schrippe {f} [cook.] | Brötchen {pl}; Semmeln {pl}; Wecken {pl}; Schrippen {pl} | (kleines, rundes) Brötchen {n} | kleine(re) Brötchen backen müssen [übtr.] :: roll; bread roll | rolls; bread rolls | biscuit [Am.] | to have to set one's sights lower"
+        self.noun = u"Brötchen {n}; Semmel {f}; Wecken {m}; Schrippe {f} [cook.] | Brötchen {pl}; Semmeln {pl}; Wecken {pl}; Schrippen {pl} | (kleines, rundes) Brötchen {n} | kleine(re) Brötchen backen müssen [übtr.] :: roll; bread roll | rolls; bread rolls | biscuit [Am.] | to have to set one's sights lower"
 
     def test_lookup(self):
 
-        expected = Noun(u"Brötchen",
-                        gender=Noun.NEUTRAL,
-                        plural_form=u"Brötchen",
-                        translation=u"roll")
+        expected = (Noun(u"Brötchen", gender=Noun.NEUTRAL),
+                    Translation(u"roll"))
         result = self.parser.lookup(u"Brötchen")
         self.assertEqual(expected, result)
 
@@ -94,25 +80,34 @@ class DictionaryParserTests(TestCase):
         self.assertRaises(WordNotFoundException, self.parser.lookup, word='xyz')
 
     def test_parse_line(self):
-
-        expected = Noun(word=u"Brötchen",
-                        gender=Noun.NEUTRAL,
-                        plural_form=u"Brötchen",
-                        translation=u"roll")
-        result = self.parser.parse_line(self.adjective)
+        expected = (Noun(u"Brötchen", gender=Noun.NEUTRAL,),
+                    Translation(u"roll"))
+        result = self.parser.parse_line(self.noun)
         self.assertEqual(expected, result)
+
+    def test_get_variant_type(self):
+
+        result = self.parser.get_variant_type(u"Brötchen {n}")
+        self.assertEqual(Noun, result)
+
+        result = self.parser.get_variant_type(u"fliegen {vi}")
+        self.assertEqual(Verb, result)
+
+        result = self.parser.get_variant_type(u"nüchtern {adj}")
+        self.assertEqual(Adjective, result)
 
     def test_multi_word_translation(self):
 
-        expected = Verb(word=u"aufrufen",
-                        translation=u"to invoice")
-        line = u"aufrufen :: to invoice"
+        expected = (Noun(word=u"Abnehmerbügel",
+                        gender=Noun.MASCULINE,),
+                    Translation(word=u"towing arm"))
+        line = u"Abnehmerbügel {m} :: towing arm"
         result = self.parser.parse_line(line)
         self.assertEqual(expected, result)
 
     def test_get_language_parts(self):
 
-        original, translation = self.parser.split_original_translation(self.adjective)
+        original, translation = self.parser.split_original_translation(self.noun)
 
         expected = u"Brötchen {n}; Semmel {f}; Wecken {m}; Schrippe {f} [cook.] | Brötchen {pl}; Semmeln {pl}; Wecken {pl}; Schrippen {pl} | (kleines, rundes) Brötchen {n} | kleine(re) Brötchen backen müssen [übtr.]"
         self.assertEqual(expected, original)
@@ -122,7 +117,7 @@ class DictionaryParserTests(TestCase):
 
     def test_get_variants(self):
 
-        original, translated = self.parser.split_original_translation(self.adjective)
+        original, translated = self.parser.split_original_translation(self.noun)
 
         expected = u"Brötchen {n}; Semmel {f}; Wecken {m}; Schrippe {f} [cook.]"
         result = self.parser.get_variants(original)
@@ -132,56 +127,15 @@ class DictionaryParserTests(TestCase):
         result = self.parser.get_variants(translated)
         self.assertEqual(expected, result)
 
-    def test_get_plurals(self):
-
-        expected = u"Brötchen {pl}; Semmeln {pl}; Wecken {pl}; Schrippen {pl}"
-        result = self.parser.get_plurals(self.adjective)
-        self.assertEqual(expected, result)
-
     def test_parse_variants(self):
 
-        original, translated = self.parser.split_original_translation(self.adjective)
+        original, translated = self.parser.split_original_translation(self.noun)
         variants = self.parser.get_variants(original)
-        expected = [
-            dict(word=u'Brötchen',
-                 gender=u'n',
-                 field=None,
-                 ),
-            dict(word=u'Semmel',
-                 gender=u'f',
-                 field=None,
-                 ),
-            dict(word=u'Wecken',
-                 gender=u'm',
-                 field=None,
-                 ),
-            dict(word=u'Schrippe',
-                 gender=u'f',
-                 field=u'cook.',
-                 ),
-            ]
-        result = self.parser.parse_variants(variants)
-        self.assertEqual(expected, result)
 
-        expected = [
-            dict(word=u'roll',
-                 gender=None,
-                 field=None),
-            dict(word=u'bread roll',
-                 gender=None,
-                 field=None),
-            ]
-        variants = self.parser.get_variants(translated)
-        result = self.parser.parse_variants(variants)
-        self.assertEqual(expected, result)
-
-    def test_parse_plural_forms(self):
-
-        plural_forms = self.parser.get_plurals(self.adjective)
-        expected = [dict(word=u'Brötchen'),
-                    dict(word=u'Semmeln'),
-                    dict(word=u'Wecken'),
-                    dict(word=u'Schrippen'),
+        expected = [Noun(u"Brötchen", gender=Noun.NEUTRAL),
+                    Noun(u"Semmel", gender=Noun.FEMININE),
+                    Noun(u'Wecken', gender=Noun.MASCULINE),
+                    Noun(u'Schrippe', gender=Noun.FEMININE),
                     ]
-        result = self.parser.parse_plurals(plural_forms)
+        result = self.parser.parse_variants(variants)
         self.assertEqual(expected, result)

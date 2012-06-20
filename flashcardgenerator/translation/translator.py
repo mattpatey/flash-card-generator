@@ -14,7 +14,9 @@ from pkg_resources import (
 from .. import data
 
 from word_parts import (
+    Adjective,
     Noun,
+    Translation,
     Verb,
     )
 
@@ -25,6 +27,16 @@ class ParseException(Exception):
 
 
 class WordNotFoundException(Exception):
+
+    pass
+
+
+class UnknownVariantTypeException(Exception):
+
+    pass
+
+
+class NoTypeIndicatorException(Exception):
 
     pass
 
@@ -43,51 +55,40 @@ class DictionaryParser():
 
         lookup_re = r'^%s.*$' % word
         lookup_ptn = re.compile(lookup_re, re.IGNORECASE)
-
         def find_word(w):
-            # TODO: This is probably the least efficient way of
-            # looking up a word, but it works (for now).
             for line in yield_lines(resource_string(data.__name__, 'de-en.txt')):
                 line_u = line.decode('utf-8')
                 if re.match(lookup_ptn, line_u):
                     return line_u
             raise WordNotFoundException
 
-        try:
-            line = find_word(word)
-            return self.parse_line(line)
-        except WordNotFoundException:
-            raise
+        line = find_word(word)
+        return self.parse_line(line)
 
     def parse_line(self, line):
         """
         Build a data structure from a dictionary entry.
         """
-
         orig, trans = self.split_original_translation(line)
+        original_variants = self.parse_variants(self.get_variants(orig))
+        translated_variants = self.parse_variants(self.get_variants(trans), is_translation=True)
 
-        o_variants = self.parse_variants(self.get_variants(orig))
-        o_plurals = self.parse_plurals(self.get_plurals(orig))
-        t_variants = self.parse_variants(self.get_variants(trans))
+        return original_variants[0], translated_variants[0]
 
-        gender = None
+    def get_variant_type(self, variant):
 
-        if o_variants:
-            word = o_variants[0]['word']
-            gender = o_variants[0]['gender']
-        if o_plurals:
-            plural_form = o_plurals[0]['word']
-        if t_variants:
-            translation = t_variants[0]['word']
+        type_indicators = (
+            (Adjective, ['adj',]),
+            (Verb, ['vi', 'vt']),
+            (Noun, [Noun.FEMININE, Noun.MASCULINE, Noun.NEUTRAL]),
+            )
 
-        if gender:
-            return Noun(word=word,
-                        gender=gender,
-                        plural_form=plural_form,
-                        translation=translation,
-                        )
-        return Verb(word=word,
-                    translation=translation)
+        for type_cls, indicators in type_indicators:
+            for i in indicators:
+                if i in variant:
+                    return type_cls
+
+        raise UnknownVariantTypeException(variant)
 
     def split_original_translation(self, line):
         """
@@ -105,49 +106,54 @@ class DictionaryParser():
 
         return line.split("|")[0].rstrip()
 
-    def parse_variants(self, variants):
+    def parse_variants(self, variants, is_translation=False):
         """
         Return a data structure representative of word variants and
         their attributes.
         """
-
-        # TODO: Parse verbs and acronyms (e.g. /CDU/)
-        # TODO: Support multi-word entries, e.g. "zu leicht nehmen"
         all_variants = [v.strip() for v in variants.split(';')]
-        word_parts = r'(?P<word>[\w\s]+) ?(\{(?P<gender>[m|f|n])\})? ?(\[(?P<field>\w+\.?)\])? ?'
+
+        word_ptn = r'[\w\s]+'
+        word_type_indicator_ptn = r'[%s|%s|%s|%s|%s|%s]' % (Noun.FEMININE,
+                                                            Noun.MASCULINE,
+                                                            Noun.NEUTRAL,
+                                                            Verb.INTRANSITIVE,
+                                                            Verb.TRANSITIVE,
+                                                            Adjective.ADJECTIVE,)
+        field_ptn = r'\w+\.?'
+        word_parts = r'(?P<word>%(word_ptn)s) ?(\{(?P<word_type_indicator>%(word_type_indicator_ptn)s)\})? ?(\[(?P<field>%(field_ptn)s)\])? ?' % dict(
+            word_ptn=word_ptn,
+            word_type_indicator_ptn=word_type_indicator_ptn,
+            field_ptn=field_ptn,
+            )
+
         word_parts_re = re.compile(word_parts, re.UNICODE)
         regex_matches = [word_parts_re.match(v) for v in all_variants]
-        variant_list = [v.groupdict() for v in regex_matches if v]
 
-        for v in variant_list:
-            v['word'] = v['word'].strip()
+        variant_list = []
+        for match in regex_matches:
+            parts = match.groupdict()
+
+            if not is_translation:
+                if not parts['word_type_indicator']:
+                    raise NoTypeIndicatorException(parts['word'])
+
+                word_part_cls = self.get_variant_type(parts['word_type_indicator'])
+
+                if word_part_cls == Noun:
+                    word_attrs = dict(gender=parts['word_type_indicator'])
+                elif word_part_cls == Verb:
+                    word_attrs = dict(verb_type=parts['word_type_indicator'])
+                else:
+                    word_attrs = dict()
+
+                word_obj = word_part_cls(parts['word'].strip(), **word_attrs)
+            else:
+                word_obj = Translation(parts['word'].strip())
+
+            variant_list.append(word_obj)
 
         return variant_list
-
-    def get_plurals(self, line):
-        """
-        Return a data structure containing plural forms of an entry.
-        """
-
-        plural_ptn = r'\w+ \{pl\};?'
-        plural_re = re.compile(plural_ptn, re.UNICODE)
-        matches = plural_re.findall(line)
-
-        return ' '.join(matches)
-
-    def parse_plurals(self, plurals):
-        """
-        Return plural forms of an entry, if any.
-        """
-
-        all_parts = plurals.split(';')
-        all_parts = [p.strip() for p in all_parts]
-        part = r'(?P<word>\w+) \{pl\}'
-        part_re = re.compile(part, re.UNICODE)
-        plurals = [part_re.match(p) for p in all_parts]
-        plurals = [p.groupdict() for p in plurals if p]
-
-        return plurals
 
 
 class Translator():

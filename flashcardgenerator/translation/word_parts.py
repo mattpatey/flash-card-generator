@@ -2,16 +2,16 @@
 
 class Noun():
 
-    FEMININE = 'f'
-    MASCULINE = 'm'
-    NEUTRAL = 'n'
+    FEMININE = u"f"
+    MASCULINE = u"m"
+    NEUTRAL = u"n"
 
-    def __init__(self, word, gender, plural_form, translation):
+    def __init__(self, word, plural_form=None, translation=None, **kwargs):
 
         self.word = word
-        self.gender = gender
         self.plural_form = plural_form
         self.translation = translation
+        self.gender = kwargs['gender']
 
     def __eq__(self, other):
 
@@ -28,7 +28,9 @@ class Noun():
 
 class Adjective():
 
-    def __init__(self, word, translation):
+    ADJECTIVE = 'adj'
+
+    def __init__(self, word, translation=None, **kwargs):
 
         self.word = word
         self.translation = translation
@@ -47,7 +49,10 @@ class Adjective():
 
 class Verb():
 
-    def __init__(self, word, translation):
+    INTRANSITIVE = 'vi'
+    TRANSITIVE = 'vt'
+
+    def __init__(self, word, translation=None, **kwargs):
 
         self.word = word
         self.translation = translation
@@ -59,6 +64,23 @@ class Verb():
 
         if (other.word == self.word and
             other.translation == self.translation):
+            return True
+
+        return False
+
+
+class Translation():
+
+    def __init__(self, word):
+
+        self.word = word
+
+    def __eq__(self, other):
+
+        if not isinstance(other, Translation):
+            return False
+
+        if other.word == self.word:
             return True
 
         return False
