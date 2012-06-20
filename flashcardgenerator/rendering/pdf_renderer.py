@@ -49,15 +49,13 @@ class CardRenderer():
 
             return elements
 
-    def render_cards(self, word_pairs, output):
+    def render_cards(self, words_and_translations, output):
 
         story = []
 
-        def _c(original, translated, gender=None):
-            if gender:
-                first_line_original = u'%s (%s)' % (original, gender)
-            else:
-                first_line_original = original
+        def _c(original, translated, word_type):
+            first_line_original = u'%s (%s)' % (original, word_type)
+
 
             elements = [Spacer(A8[0], A8[1] / 2.5),
                         Paragraph(first_line_original, self.flash_card_style),
@@ -68,10 +66,11 @@ class CardRenderer():
                         ]
             return elements
 
-        for original, translated in word_pairs:
-            word = original['word']
-            gender = original['gender']
-            cards = _c(word, translated, gender=gender)
+        for original, translated in words_and_translations:
+            word = original.word
+            word_type = original.type_identifier
+            translated_word = translated.word
+            cards = _c(word, translated_word, word_type)
             story = story + cards
 
         doc = FlashCardTemplate(output)

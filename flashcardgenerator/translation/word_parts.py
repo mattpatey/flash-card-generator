@@ -6,12 +6,10 @@ class Noun():
     MASCULINE = u"m"
     NEUTRAL = u"n"
 
-    def __init__(self, word, plural_form=None, translation=None, **kwargs):
+    def __init__(self, word, type_identifier):
 
         self.word = word
-        self.plural_form = plural_form
-        self.translation = translation
-        self.gender = kwargs['gender']
+        self.type_identifier = type_identifier
 
     def __eq__(self, other):
 
@@ -25,15 +23,19 @@ class Noun():
 
         return False
 
+    def __unicode__(self):
+
+        return self.word
+
 
 class Adjective():
 
     ADJECTIVE = 'adj'
 
-    def __init__(self, word, translation=None, **kwargs):
+    def __init__(self, word, **_kwargs):
 
         self.word = word
-        self.translation = translation
+        self.type_identifier = ADJECTIVE
 
     def __eq__(self, other):
 
@@ -46,16 +48,20 @@ class Adjective():
 
         return False
 
+    def __unicode__(self):
+
+        return self.word
+
 
 class Verb():
 
     INTRANSITIVE = 'vi'
     TRANSITIVE = 'vt'
 
-    def __init__(self, word, translation=None, **kwargs):
+    def __init__(self, word, type_identifier):
 
         self.word = word
-        self.translation = translation
+        self.type_identifier = type_identifier
 
     def __eq__(self, other):
 
@@ -67,6 +73,10 @@ class Verb():
             return True
 
         return False
+
+    def __unicode__(self):
+
+        return self.word
 
 
 class Translation():
@@ -84,3 +94,7 @@ class Translation():
             return True
 
         return False
+
+    def __unicode__(self):
+
+        return self.word

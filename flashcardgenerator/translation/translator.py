@@ -41,6 +41,11 @@ class NoTypeIndicatorException(Exception):
     pass
 
 
+class VariantParseException(Exception):
+
+    pass
+
+
 class DictionaryParser():
     """
     Parse plain-text lines in a dictionary.
@@ -86,7 +91,7 @@ class DictionaryParser():
         for type_cls, indicators in type_indicators:
             for i in indicators:
                 if i in variant:
-                    return type_cls
+                    return (type_cls, i)
 
         raise UnknownVariantTypeException(variant)
 
@@ -113,7 +118,8 @@ class DictionaryParser():
         """
         all_variants = [v.strip() for v in variants.split(';')]
 
-        word_ptn = r'[\w\s]+'
+        context_ptn = r'[\w\s\/\.]+'
+        word_ptn = r'["\w\s\.\(\)\+]+'
         word_type_indicator_ptn = r'[%s|%s|%s|%s|%s|%s]' % (Noun.FEMININE,
                                                             Noun.MASCULINE,
                                                             Noun.NEUTRAL,
@@ -121,7 +127,9 @@ class DictionaryParser():
                                                             Verb.TRANSITIVE,
                                                             Adjective.ADJECTIVE,)
         field_ptn = r'\w+\.?'
-        word_parts = r'(?P<word>%(word_ptn)s) ?(\{(?P<word_type_indicator>%(word_type_indicator_ptn)s)\})? ?(\[(?P<field>%(field_ptn)s)\])? ?' % dict(
+        # LATER: Is 'context' correct?
+        word_parts = r'(?P<context>\(%(context_ptn)s\))? ?(?P<word>%(word_ptn)s) ?(\{(?P<word_type_indicator>%(word_type_indicator_ptn)s)\})? ?(\[(?P<field>%(field_ptn)s)\])? ?' % dict(
+            context_ptn=context_ptn,
             word_ptn=word_ptn,
             word_type_indicator_ptn=word_type_indicator_ptn,
             field_ptn=field_ptn,
@@ -132,22 +140,17 @@ class DictionaryParser():
 
         variant_list = []
         for match in regex_matches:
+            if not match:
+                raise VariantParseException(variants)
             parts = match.groupdict()
 
             if not is_translation:
                 if not parts['word_type_indicator']:
                     raise NoTypeIndicatorException(parts['word'])
 
-                word_part_cls = self.get_variant_type(parts['word_type_indicator'])
-
-                if word_part_cls == Noun:
-                    word_attrs = dict(gender=parts['word_type_indicator'])
-                elif word_part_cls == Verb:
-                    word_attrs = dict(verb_type=parts['word_type_indicator'])
-                else:
-                    word_attrs = dict()
-
-                word_obj = word_part_cls(parts['word'].strip(), **word_attrs)
+                word_part_cls, type_identifier = self.get_variant_type(parts['word_type_indicator'])
+                word_obj = word_part_cls(parts['word'].strip(),
+                                         type_identifier=parts['word_type_indicator'])
             else:
                 word_obj = Translation(parts['word'].strip())
 

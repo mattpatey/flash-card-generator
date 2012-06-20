@@ -19,8 +19,11 @@ from rendering import CardRenderer
 
 from translation import (
     DictionaryParser,
+    NoTypeIndicatorException,
     ParseException,
     Translator,
+    UnknownVariantTypeException,
+    VariantParseException,
     WordNotFoundException,
     )
 
@@ -36,13 +39,23 @@ def parse_dictionary(dictionary_file):
             if line.startswith('#'):
                 continue
             try:
-                word, d = dict_parser.parse_line(line)
-                if not d['translations']:
+                word, translation = dict_parser.parse_line(line)
+                if not translation:
                     logger.error(u"Couldn't find translation for '%s'" % line)
                     continue
-                entries[word] = d
+                entry_key = unicode(word)
+                if not entries.get(entry_key):
+                    entries[entry_key] = word, translation
+                else:
+                    logger.info("Skipping duplicate entry for '%s'." % entry_key)
             except ParseException, e:
-                logger.warn(u'Parse error: %s' % e)
+                logger.warn(u"Parse error: '%s'" % e)
+            except NoTypeIndicatorException, e:
+                logger.warn(u"Couldn't figure out word type for line: '%s'" % e)
+            except VariantParseException, e:
+                logger.warn(u"Couldn't parse some variants: '%s'" % e)
+            except UnknownVariantTypeException, e:
+                logger.warn(u"Not sure what a '%s' is." % e)
     return entries
 
 def create_dictionary_pickle():
@@ -84,19 +97,15 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.word_file:
-        word_pairs = []
+        words_and_translations = []
         with codecs.open(args.word_file, 'r', encoding='utf-8') as lines:
             for word in lines:
                 try:
-                    word_info = translate(word.strip(), translator)
+                    original, translation = translate(word.strip(), translator)
                 except WordNotFoundException:
                     continue
-                original_word_data = dict(word=word_info['singular'],
-                                          gender=word_info['gender'])
-                word_pairs.append((original_word_data,
-                                   word_info['translations']))
+                words_and_translations.append((original, translation))
 
         renderer = CardRenderer()
-        renderer.render_cards(word_pairs,
-                              '/tmp/test.pdf')
+        renderer.render_cards(words_and_translations, '/tmp/test.pdf')
         sys.exit(0)
